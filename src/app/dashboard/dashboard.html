@@ -52,9 +52,45 @@
         }
 
         @if (user(); as currentUser) {
-          <article class="panel profile-panel"><div class="panel-header"><div><h2>Account Details</h2><p>Your mock profile</p></div></div><div class="profile-details"><div class="large-avatar">{{ currentUser.name.charAt(0) }}</div><h3>{{ currentUser.name }}</h3><p>{{ currentUser.email }}</p><dl><div><dt>Username</dt><dd>{{ currentUser.username }}</dd></div><div><dt>Department</dt><dd>{{ currentUser.department }}</dd></div><div><dt>Balance</dt><dd>{{ balanceLabel() }}</dd></div><div><dt>Role</dt><dd>{{ currentUser.role }}</dd></div></dl></div></article>
+          <article class="panel profile-panel"><div class="panel-header"><div><h2>Account Details</h2><p>Your mock profile</p></div></div><div class="profile-details"><div class="large-avatar">{{ currentUser.name.charAt(0) }}</div><h3>{{ currentUser.name }}</h3><p>{{ currentUser.email }}</p><dl><div><dt>Username</dt><dd>{{ currentUser.username }}</dd></div><div><dt>Department</dt><dd>{{ currentUser.department }}</dd></div><div><dt>Balance</dt><dd>{{ balanceLabel() }}</dd></div><div><dt>Role</dt><dd>{{ currentUser.role }}</dd></div><div><dt>Subscription</dt><dd>{{ currentUser.subscription?.planName ?? 'No active subscription' }}</dd></div><div><dt>Data</dt><dd>{{ currentUser.subscription?.dataAllowance ?? '—' }}</dd></div><div><dt>Expires</dt><dd>{{ subscriptionExpiryLabel() }}</dd></div><div><dt>Remaining</dt><dd>{{ remainingTimeLabel() }}</dd></div><div><dt>Connection</dt><dd [class.connected]="hasActiveSubscription()" [class.disconnected]="!hasActiveSubscription()">{{ connectionStatus() }}</dd></div></dl></div></article>
         }
       </div>
+
+      @if (isAdministrator()) {
+        <article class="panel management-panel">
+          <div class="panel-header"><div><h2>Subscriber Overview</h2><p>Accounts, subscriptions, devices, and speed limits</p></div></div>
+          <div class="user-table-wrap">
+            <table class="user-table">
+              <thead><tr><th>Subscriber</th><th>Username</th><th>Phone</th><th>MAC Address</th><th>Balance</th><th>Subscription</th><th>Expires</th><th>Speed Limit</th><th>Status</th></tr></thead>
+              <tbody>
+                @for (subscriber of managedUsers; track subscriber.username) {
+                  <tr>
+                    <td><strong>{{ subscriber.name }}</strong><small>{{ subscriber.email }}</small></td>
+                    <td>{{ subscriber.username }}</td>
+                    <td>{{ subscriber.phone }}</td>
+                    <td>{{ subscriber.macAddress }}</td>
+                    <td>{{ subscriber.balance }}</td>
+                    <td>{{ subscriber.subscription?.planName ?? 'None' }}</td>
+                    <td>{{ subscriber.subscription?.expiresAt ?? '—' }}</td>
+                    <td>{{ subscriber.subscription ? subscriber.subscription.speedLimitMbps + ' Mbps' : '—' }}</td>
+                    <td><span class="status" [class.pending]="!subscriber.subscription">{{ subscriber.subscription ? 'Active' : 'Disconnected' }}</span></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </article>
+      }
+
+      @if (!isAdministrator()) {
+        <div class="connection-banner" [class.connected]="hasActiveSubscription()" [class.disconnected]="!hasActiveSubscription()">
+          <span class="connection-dot" aria-hidden="true"></span>
+          <div>
+            <strong>{{ connectionStatus() }}</strong>
+            <p>{{ hasActiveSubscription() ? remainingTimeLabel() : 'No active subscription or load has expired. Your connection is unavailable.' }}</p>
+          </div>
+        </div>
+      }
     </section>
   </main>
 </div>
