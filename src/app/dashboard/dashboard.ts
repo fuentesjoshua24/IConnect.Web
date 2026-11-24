@@ -1,10 +1,14 @@
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
-import { AuthService } from '../auth.service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { firstValueFrom, map } from 'rxjs';
+import { ApiUser, AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -12,86 +16,111 @@ import { AuthService } from '../auth.service';
 export class Dashboard {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
-  private readonly destroyRef = inject(DestroyRef);
+  private readonly route = inject(ActivatedRoute);
 
   readonly user = this.auth.currentUser;
-  readonly firstName = computed(() => this.user()?.name.split(' ')[0] ?? 'User');
-  readonly currentTime = signal(Date.now());
-  private readonly countdownTimer = setInterval(() => {
-    this.currentTime.set(Date.now());
-  }, 30_000);
-
-  readonly isAdministrator = computed(() => this.user()?.role === 'Administrator');
-  readonly balanceLabel = computed(() => {
-    const balance = this.user()?.balance ?? 0;
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    }).format(balance);
+  readonly activeSection = toSignal(this.route.fragment.pipe(map((fragment) => fragment ?? 'overview')), {
+    initialValue: this.route.snapshot.fragment ?? 'overview',
   });
-
-  readonly subscriptionExpiryLabel = computed(() => {
-    const expiresAt = this.user()?.subscription?.expiresAt;
-    if (!expiresAt) {
-      return 'No active subscription';
+  readonly firstName = computed(() => {
+    const email = this.user()?.email;
+    return email ? email.split('@')[0] : 'User';
+  });
+  readonly roleLabel = computed(() => {
+    const roles = this.user()?.roles ?? [];
+    return roles.join(', ') || 'Subscriber';
+  });
+  readonly isAdministrator = computed(() =>
+    (this.user()?.roles ?? []).some((role) => role.toLowerCase() === 'administrator'),
+  );
+  readonly createdAtLabel = computed(() => {
+    const createdAt = this.user()?.createdAt;
+    if (!createdAt) {
+      return '—';
     }
 
     return new Intl.DateTimeFormat('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
-    }).format(new Date(`${expiresAt}T12:00:00`));
+    }).format(new Date(createdAt));
   });
 
-  readonly remainingTimeLabel = computed(() => {
-    const expiresAt = this.user()?.subscription?.expiresAt;
-    if (!expiresAt) {
-      return 'No subscription';
-    }
+  readonly profileError = signal('');
+  readonly passwordError = signal('');
+  readonly passwordSuccess = signal('');
+  readonly isChangingPassword = signal(false);
 
-    const expiry = new Date(`${expiresAt}T23:59:59`).getTime();
-    const remainingMilliseconds = expiry - this.currentTime();
-
-    if (remainingMilliseconds <= 0) {
-      return 'Expired';
-    }
-
-    const remainingMinutes = Math.ceil(remainingMilliseconds / 60_000);
-    if (remainingMinutes < 60) {
-      return `${remainingMinutes} minute${remainingMinutes === 1 ? '' : 's'} remaining`;
-    }
-
-    const remainingHours = Math.ceil(remainingMilliseconds / 3_600_000);
-    if (remainingHours < 24) {
-      return `${remainingHours} hour${remainingHours === 1 ? '' : 's'} remaining`;
-    }
-
-    const remainingDays = Math.ceil(remainingMilliseconds / 86_400_000);
-    return `${remainingDays} day${remainingDays === 1 ? '' : 's'} remaining`;
+  readonly changePasswordForm = new FormGroup({
+    currentPassword: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.maxLength(100)] }),
+    newPassword: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(8), Validators.maxLength(100)] }),
+    confirmPassword: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+  }, {
+    validators: (control) => control.get('newPassword')?.value === control.get('confirmPassword')?.value
+      ? null
+      : { passwordMismatch: true },
   });
-
-  readonly hasActiveSubscription = computed(() => {
-    const expiresAt = this.user()?.subscription?.expiresAt;
-    if (!expiresAt) {
-      return false;
-    }
-
-    return new Date(`${expiresAt}T23:59:59`).getTime() > this.currentTime();
-  });
-
-  readonly connectionStatus = computed(() =>
-    this.hasActiveSubscription() ? 'Connected' : 'Disconnected',
-  );
-
-  readonly managedUsers = this.auth.users.filter((item) => item.role === 'Subscriber');
 
   constructor() {
-    this.destroyRef.onDestroy(() => clearInterval(this.countdownTimer));
+    void this.loadCurrentUser();
+  }
+
+  async updatePassword(): Promise<void> {
+    this.passwordError.set('');
+    this.passwordSuccess.set('');
+    if (this.changePasswordForm.invalid) {
+      this.changePasswordForm.markAllAsTouched();
+      return;
+    }
+
+    this.isChangingPassword.set(true);
+    try {
+      const { currentPassword, newPassword } = this.changePasswordForm.getRawValue();
+      await firstValueFrom(this.auth.changePassword(currentPassword, newPassword));
+      this.changePasswordForm.reset();
+      this.passwordSuccess.set('Your password has been updated.');
+    } catch (error: unknown) {
+      this.passwordError.set(this.passwordErrorMessage(error));
+    } finally {
+      this.isChangingPassword.set(false);
+    }
+  }
+
+  private async loadCurrentUser(): Promise<void> {
+    try {
+      const currentUser = await firstValueFrom(this.auth.getCurrentUser());
+      this.auth.setCurrentUser(currentUser);
+      this.profileError.set('');
+    } catch (error: unknown) {
+      if (error instanceof HttpErrorResponse && error.status === 401) {
+        this.auth.logout();
+        await this.router.navigate(['/login'], { replaceUrl: true });
+        return;
+      }
+
+      this.profileError.set('Unable to refresh your account details from the API.');
+    }
+  }
+
+  private passwordErrorMessage(error: unknown): string {
+    if (!(error instanceof HttpErrorResponse)) {
+      return 'Unable to update your password. Please try again.';
+    }
+    if (error.status === 401) {
+      return 'The current password is incorrect.';
+    }
+    if (error.status === 400) {
+      const problem = error.error as { detail?: string; title?: string } | null;
+      return problem?.detail || problem?.title || 'The new password was rejected.';
+    }
+    if (error.status === 0) {
+      return 'Cannot reach the API. Check the server and network connection.';
+    }
+    return 'Unable to update your password. Please try again.';
   }
 
   logout(): void {
     this.auth.logout();
-    void this.router.navigate(['/login']);
+    void this.router.navigate(['/login'], { replaceUrl: true });
   }
 }

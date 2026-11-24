@@ -6,11 +6,11 @@
     </div>
 
     <nav aria-label="Main navigation">
-      <a class="active" href="/dashboard"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10Zm0 8h8v-6H3v6Zm10 0h8V11h-8v10Zm0-18v6h8V3h-8Z"/></svg><span>Overview</span></a>
+      <a [class.active]="activeSection() === 'overview'" [routerLink]="['/dashboard']" fragment="overview"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10Zm0 8h8v-6H3v6Zm10 0h8V11h-8v10Zm0-18v6h8V3h-8Z"/></svg><span>Overview</span></a>
       @if (isAdministrator()) {
-        <a href="#"><svg viewBox="0 0 24 24"><path d="M16 11c1.7 0 3-1.3 3-3s-1.3-3-3-3-3 1.3-3 3 1.3 3 3 3Zm-8 0c1.7 0 3-1.3 3-3S9.7 5 8 5 5 6.3 5 8s1.3 3 3 3Zm0 2c-2.3 0-7 1.2-7 3.5V20h14v-3.5C15 14.2 10.3 13 8 13Zm8 0c-.3 0-.7 0-1.1.1 1.3.9 2.1 2.1 2.1 3.4V20h7v-3.5c0-2.3-4.7-3.5-7-3.5Z"/></svg><span>Users</span></a>
-        <a href="#"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2Zm-8 14H7v-2h4v2Zm0-4H7v-2h4v2Zm0-4H7V7h4v2Zm6 8h-4v-2h4v2Zm0-4h-4v-2h4v2Zm0-4h-4V7h4v2Z"/></svg><span>Reports</span></a>
-        <a href="#"><svg viewBox="0 0 24 24"><path d="M19.1 12.9c.1-.3.1-.6.1-.9s0-.6-.1-.9l2.1-1.6-2-3.5-2.5 1a7 7 0 0 0-1.6-.9L14.8 3h-4l-.4 3.1c-.6.2-1.1.5-1.6.9l-2.5-1-2 3.5 2.1 1.6c-.1.3-.1.6-.1.9s0 .6.1.9L4.3 14.5l2 3.5 2.5-1c.5.4 1 .7 1.6.9l.4 3.1h4l.4-3.1c.6-.2 1.1-.5 1.6-.9l2.5 1 2-3.5-2.2-1.6ZM12.8 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg><span>Settings</span></a>
+        <a [class.active]="activeSection() === 'users'" [routerLink]="['/dashboard']" fragment="users"><svg viewBox="0 0 24 24"><path d="M16 11c1.7 0 3-1.3 3-3s-1.3-3-3-3-3 1.3-3 3 1.3 3 3 3Zm-8 0c1.7 0 3-1.3 3-3S9.7 5 8 5 5 6.3 5 8s1.3 3 3 3Zm0 2c-2.3 0-7 1.2-7 3.5V20h14v-3.5C15 14.2 10.3 13 8 13Zm8 0c-.3 0-.7 0-1.1.1 1.3.9 2.1 2.1 2.1 3.4V20h7v-3.5c0-2.3-4.7-3.5-7-3.5Z"/></svg><span>Users</span></a>
+        <a [class.active]="activeSection() === 'reports'" [routerLink]="['/dashboard']" fragment="reports"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2Zm-8 14H7v-2h4v2Zm0-4H7v-2h4v2Zm0-4H7V7h4v2Zm6 8h-4v-2h4v2Zm0-4h-4v-2h4v2Zm0-4h-4V7h4v2Z"/></svg><span>Reports</span></a>
+        <a [class.active]="activeSection() === 'settings'" [routerLink]="['/dashboard']" fragment="settings"><svg viewBox="0 0 24 24"><path d="M19.1 12.9c.1-.3.1-.6.1-.9s0-.6-.1-.9l2.1-1.6-2-3.5-2.5 1a7 7 0 0 0-1.6-.9L14.8 3h-4l-.4 3.1c-.6.2-1.1.5-1.6.9l-2.5-1-2 3.5 2.1 1.6c-.1.3-.1.6-.1.9s0 .6.1.9L4.3 14.5l2 3.5 2.5-1c.5.4 1 .7 1.6.9l.4 3.1h4l.4-3.1c.6-.2 1.1-.5 1.6-.9l2.5 1 2-3.5-2.2-1.6ZM12.8 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg><span>Settings</span></a>
       }
     </nav>
 
@@ -23,73 +23,91 @@
       <div class="topbar-actions">
         <button class="icon-button" type="button" aria-label="Notifications"><svg viewBox="0 0 24 24"><path d="M18 16v-5c0-3.1-1.6-5.6-4.5-6.3V4a1.5 1.5 0 0 0-3 0v.7C7.6 5.4 6 7.9 6 11v5l-2 2v1h16v-1l-2-2Zm-8 4h4a2 2 0 0 1-4 0Z"/></svg><span class="notification-dot"></span></button>
         @if (user(); as currentUser) {
-          <div class="profile"><div class="avatar">{{ currentUser.name.charAt(0) }}</div><div><strong>{{ currentUser.name }}</strong><small>{{ currentUser.role }}</small></div></div>
+          <div class="profile"><div class="avatar">{{ currentUser.email.charAt(0).toUpperCase() }}</div><div><strong>{{ currentUser.email }}</strong><small>{{ currentUser.roles.join(', ') }}</small></div></div>
         }
       </div>
     </header>
 
-    <section class="content">
-      <div class="welcome-row"><div><p class="eyebrow">DASHBOARD</p><h1>Good morning, {{ firstName() }}</h1><p>{{ isAdministrator() ? 'Here is what is happening across your organization today.' : 'Review your account details and current balance.' }}</p></div><button class="date-button" type="button">Nov 22, 2026 <svg viewBox="0 0 24 24"><path d="M7 2v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-2V2h-2v2H9V2H7Zm12 18H5V9h14v11ZM5 7V6h14v1H5Z"/></svg></button></div>
+    <section class="content" id="overview">
+      <div class="welcome-row"><div><p class="eyebrow">DASHBOARD</p><h1>Welcome, {{ firstName() }}</h1><p>Review your authenticated account information.</p></div></div>
 
-      @if (isAdministrator()) {
-        <div class="stats-grid">
-          <article><div class="stat-icon blue"><svg viewBox="0 0 24 24"><path d="M16 11c1.7 0 3-1.3 3-3S17.7 5 16 5s-3 1.3-3 3 1.3 3 3 3ZM8 11c1.7 0 3-1.3 3-3S9.7 5 8 5 5 6.3 5 8s1.3 3 3 3Zm0 2c-2.3 0-7 1.2-7 3.5V20h14v-3.5C15 14.2 10.3 13 8 13Zm8 0c-.3 0-.7 0-1.1.1 1.3.9 2.1 2.1 2.1 3.4V20h7v-3.5c0-2.3-4.7-3.5-7-3.5Z"/></svg></div><div><p>Total Users</p><h2>1,284</h2><span class="positive">↗ 12.5%</span></div></article>
-          <article><div class="stat-icon violet"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 11h-2V6h2v7Zm0 4h-2v-2h2v2Z"/></svg></div><div><p>Active Sessions</p><h2>842</h2><span class="positive">↗ 8.2%</span></div></article>
-          <article><div class="stat-icon orange"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2Zm-8 14H7v-2h4v2Zm0-4H7v-2h4v2Zm0-4H7V7h4v2Zm6 8h-4v-2h4v2Zm0-4h-4v-2h4v2Zm0-4h-4V7h4v2Z"/></svg></div><div><p>Open Tickets</p><h2>36</h2><span class="negative">↘ 3.1%</span></div></article>
-          <article><div class="stat-icon green"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm-2 15-5-5 1.4-1.4 3.6 3.6 7.6-7.6L19 7.9l-9 9.1Z"/></svg></div><div><p>Resolved</p><h2>928</h2><span class="positive">↗ 18.7%</span></div></article>
-        </div>
-      }
-
-      <div class="panels-grid" [class.subscriber-panels]="!isAdministrator()">
-        @if (isAdministrator()) {
-          <article class="panel activity-panel"><div class="panel-header"><div><h2>Recent Activity</h2><p>Latest account updates</p></div><button type="button">View all</button></div>
-            <div class="activity-list">
-              <div><div class="activity-avatar blue">JD</div><div><strong>Jane Doe updated her profile</strong><p>Human Resources • 12 minutes ago</p></div><span class="status">Updated</span></div>
-              <div><div class="activity-avatar green">MG</div><div><strong>New support ticket created</strong><p>Finance • 48 minutes ago</p></div><span class="status pending">Pending</span></div>
-              <div><div class="activity-avatar violet">RK</div><div><strong>Robert Kim joined the platform</strong><p>Engineering • 2 hours ago</p></div><span class="status">Active</span></div>
-            </div>
-          </article>
-        }
-
+      <div class="panels-grid subscriber-panels">
         @if (user(); as currentUser) {
-          <article class="panel profile-panel"><div class="panel-header"><div><h2>Account Details</h2><p>Your mock profile</p></div></div><div class="profile-details"><div class="large-avatar">{{ currentUser.name.charAt(0) }}</div><h3>{{ currentUser.name }}</h3><p>{{ currentUser.email }}</p><dl><div><dt>Username</dt><dd>{{ currentUser.username }}</dd></div><div><dt>Department</dt><dd>{{ currentUser.department }}</dd></div><div><dt>Balance</dt><dd>{{ balanceLabel() }}</dd></div><div><dt>Role</dt><dd>{{ currentUser.role }}</dd></div><div><dt>Subscription</dt><dd>{{ currentUser.subscription?.planName ?? 'No active subscription' }}</dd></div><div><dt>Data</dt><dd>{{ currentUser.subscription?.dataAllowance ?? '—' }}</dd></div><div><dt>Expires</dt><dd>{{ subscriptionExpiryLabel() }}</dd></div><div><dt>Remaining</dt><dd>{{ remainingTimeLabel() }}</dd></div><div><dt>Connection</dt><dd [class.connected]="hasActiveSubscription()" [class.disconnected]="!hasActiveSubscription()">{{ connectionStatus() }}</dd></div></dl></div></article>
+          <article class="panel profile-panel"><div class="panel-header"><div><h2>Account Details</h2><p>Authenticated API account</p></div></div><div class="profile-details"><div class="large-avatar">{{ currentUser.email.charAt(0).toUpperCase() }}</div><h3>{{ currentUser.email }}</h3><p>User ID: {{ currentUser.id }}</p><dl><div><dt>Email</dt><dd>{{ currentUser.email }}</dd></div><div><dt>Role</dt><dd>{{ currentUser.roles.join(', ') }}</dd></div><div><dt>Status</dt><dd>{{ currentUser.isActive ? 'Active' : 'Inactive' }}</dd></div><div><dt>Created</dt><dd>{{ createdAtLabel() }}</dd></div></dl></div></article>
         }
       </div>
 
+      @if (profileError()) {
+        <div class="connection-banner disconnected" role="status">
+          <span class="connection-dot"></span>
+          <div><strong>Profile refresh failed</strong><p>{{ profileError() }}</p></div>
+        </div>
+      }
+
       @if (isAdministrator()) {
-        <article class="panel management-panel">
-          <div class="panel-header"><div><h2>Subscriber Overview</h2><p>Accounts, subscriptions, devices, and speed limits</p></div></div>
+        <article class="panel management-panel" id="users">
+          <div class="panel-header">
+            <div><h2>User Management</h2><p>Administrator access</p></div>
+          </div>
           <div class="user-table-wrap">
             <table class="user-table">
-              <thead><tr><th>Subscriber</th><th>Username</th><th>Phone</th><th>MAC Address</th><th>Balance</th><th>Subscription</th><th>Expires</th><th>Speed Limit</th><th>Status</th></tr></thead>
+              <thead><tr><th>User</th><th>Roles</th><th>Status</th><th>Created</th></tr></thead>
               <tbody>
-                @for (subscriber of managedUsers; track subscriber.username) {
-                  <tr>
-                    <td><strong>{{ subscriber.name }}</strong><small>{{ subscriber.email }}</small></td>
-                    <td>{{ subscriber.username }}</td>
-                    <td>{{ subscriber.phone }}</td>
-                    <td>{{ subscriber.macAddress }}</td>
-                    <td>{{ subscriber.balance }}</td>
-                    <td>{{ subscriber.subscription?.planName ?? 'None' }}</td>
-                    <td>{{ subscriber.subscription?.expiresAt ?? '—' }}</td>
-                    <td>{{ subscriber.subscription ? subscriber.subscription.speedLimitMbps + ' Mbps' : '—' }}</td>
-                    <td><span class="status" [class.pending]="!subscriber.subscription">{{ subscriber.subscription ? 'Active' : 'Disconnected' }}</span></td>
-                  </tr>
-                }
+                <tr><td colspan="4" class="empty-state">The current API only provides your own profile. A user-directory endpoint is not available yet.</td></tr>
               </tbody>
             </table>
           </div>
         </article>
-      }
 
-      @if (!isAdministrator()) {
-        <div class="connection-banner" [class.connected]="hasActiveSubscription()" [class.disconnected]="!hasActiveSubscription()">
-          <span class="connection-dot" aria-hidden="true"></span>
-          <div>
-            <strong>{{ connectionStatus() }}</strong>
-            <p>{{ hasActiveSubscription() ? remainingTimeLabel() : 'No active subscription or load has expired. Your connection is unavailable.' }}</p>
+        <article class="panel management-panel" id="reports">
+          <div class="panel-header">
+            <div><h2>Reports</h2><p>Reporting is not available yet</p></div>
           </div>
-        </div>
+          <p class="section-message">The current API does not expose report data.</p>
+        </article>
+
+        <article class="panel management-panel" id="settings">
+          <div class="panel-header">
+            <div><h2>Settings</h2><p>Update your account password</p></div>
+          </div>
+          @if (passwordError()) {
+            <p class="form-message error" role="alert">{{ passwordError() }}</p>
+          }
+          @if (passwordSuccess()) {
+            <p class="form-message success" role="status">{{ passwordSuccess() }}</p>
+          }
+          <form class="settings-form" [formGroup]="changePasswordForm" (ngSubmit)="updatePassword()" novalidate>
+            <label>
+              Current password
+              <input type="password" formControlName="currentPassword" autocomplete="current-password">
+            </label>
+            @if (changePasswordForm.controls.currentPassword.touched && changePasswordForm.controls.currentPassword.hasError('required')) {
+              <p class="field-error">Current password is required.</p>
+            }
+            <label>
+              New password
+              <input type="password" formControlName="newPassword" autocomplete="new-password">
+            </label>
+            @if (changePasswordForm.controls.newPassword.touched && changePasswordForm.controls.newPassword.hasError('minlength')) {
+              <p class="field-error">Password must be at least 8 characters.</p>
+            }
+            @if (changePasswordForm.controls.newPassword.touched && changePasswordForm.controls.newPassword.hasError('required')) {
+              <p class="field-error">New password is required.</p>
+            }
+            <label>
+              Confirm new password
+              <input type="password" formControlName="confirmPassword" autocomplete="new-password">
+            </label>
+            @if (changePasswordForm.controls.confirmPassword.touched && changePasswordForm.hasError('passwordMismatch')) {
+              <p class="field-error">Passwords do not match.</p>
+            } @else if (changePasswordForm.controls.confirmPassword.touched && changePasswordForm.controls.confirmPassword.hasError('required')) {
+              <p class="field-error">Confirm your new password.</p>
+            }
+            <button class="edit-button" type="submit" [disabled]="isChangingPassword()">
+              {{ isChangingPassword() ? 'Updating...' : 'Update password' }}
+            </button>
+          </form>
+        </article>
       }
     </section>
   </main>

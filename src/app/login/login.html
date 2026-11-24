@@ -1,69 +1,207 @@
 <main class="login-page">
-  <section class="login-card" aria-labelledby="login-title">
+  <section class="login-card" aria-labelledby="auth-title">
     <div class="brand">
       <div class="brand-mark" aria-hidden="true">
-        <svg viewBox="0 0 24 24"><path d="M12 3 4.5 6.5v5c0 4.7 3.2 8.2 7.5 9.5 4.3-1.3 7.5-4.8 7.5-9.5v-5L12 3Zm0 2.2 5.2 2.4v3.9c0 3.5-2.2 6.2-5.2 7.4-3-1.2-5.2-3.9-5.2-7.4V7.6L12 5.2Zm-3 6.3 1.7 1.7 4.1-4.1 1.4 1.4-5.5 5.5-3.1-3.1 1.4-1.4Z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 3 4.5 6.5v5c0 4.7 3.2 8.2 7.5 9.5 4.3-1.3 7.5-4.8 7.5-9.5v-5L12 3Z"/></svg>
       </div>
       <span>IConnect</span>
     </div>
 
-    <div class="login-heading">
-      <p class="eyebrow">WELCOME BACK</p>
-      <h1 id="login-title">Sign in to your account</h1>
-      <p>Enter your credentials to continue to the dashboard.</p>
-    </div>
+    @if (errorMessage()) {
+      <div class="alert" role="alert">
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+    @if (successMessage()) {
+      <div class="success-message" role="status">{{ successMessage() }}</div>
+    }
 
-    <form [formGroup]="loginForm" (ngSubmit)="submit()" novalidate>
-      @if (errorMessage()) {
-        <div class="alert" role="alert">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 7h2v6h-2V7Zm0 8h2v2h-2v-2Zm1-13 10 18H2L12 2Zm0 4.1L5.2 18h13.6L12 6.1Z"/></svg>
-          <span>{{ errorMessage() }}</span>
+    @switch (mode()) {
+      @case ('login') {
+        <div class="login-heading">
+          <p class="eyebrow">WELCOME BACK</p>
+          <h1 id="auth-title">Sign in to your account</h1>
+          <p>Enter your credentials to continue.</p>
+        </div>
+        <form [formGroup]="loginForm" (ngSubmit)="submitLogin()" novalidate>
+          <div class="field">
+            <label for="login-email">Email</label>
+            <div class="input-wrap">
+              <input id="login-email" type="email" formControlName="email" autocomplete="email" placeholder="Enter your email" />
+            </div>
+            @if (loginForm.controls.email.touched && loginForm.controls.email.hasError('required')) {
+              <p class="field-error">Email is required.</p>
+            } @else if (loginForm.controls.email.touched && loginForm.controls.email.hasError('email')) {
+              <p class="field-error">Enter a valid email address.</p>
+            }
+          </div>
+
+          <div class="field">
+            <label for="login-password">Password</label>
+            <div class="input-wrap">
+              <input id="login-password" [type]="showPassword() ? 'text' : 'password'" formControlName="password" autocomplete="current-password" placeholder="Enter your password" />
+              <button class="password-toggle" type="button" (click)="togglePassword()"
+                [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+                [attr.title]="showPassword() ? 'Hide password' : 'Show password'">
+                @if (showPassword()) {
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.27-.36 1.83l2.43 2.43c1.5-1.19 2.7-2.71 3.43-4.26C20.84 8.36 16.66 5 12 5c-1.04 0-2.05.17-3 .48l1.56 1.56C10.98 7.02 11.48 7 12 7ZM2.27 1.72 1 3l2.72 2.72A13.4 13.4 0 0 0 2 12c1.66 3.64 5.84 7 10.5 7 1.25 0 2.45-.24 3.56-.68L18.62 21l1.27-1.27L2.27 1.72ZM12 17c-3.31 0-6.31-2.11-8-5 .64-1.1 1.48-2.09 2.45-2.91l1.7 1.7A5 5 0 0 0 12 16.5c.56 0 1.1-.09 1.6-.26l1.61 1.61c-.99.36-2.08.55-3.21.55Z"/></svg>
+                } @else {
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5C7.34 5 3.16 8.36 1.5 12 3.16 15.64 7.34 19 12 19s8.84-3.36 10.5-7C20.84 8.36 16.66 5 12 5Zm0 11.5A4.5 4.5 0 1 1 12 7.5a4.5 4.5 0 0 1 0 9Zm0-7.5a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/></svg>
+                }
+              </button>
+            </div>
+            @if (loginForm.controls.password.touched && loginForm.controls.password.hasError('required')) {
+              <p class="field-error">Password is required.</p>
+            }
+          </div>
+
+          <button class="submit-button" type="submit" [disabled]="isSubmitting()">
+            {{ isSubmitting() ? 'Signing in...' : 'Sign in' }}
+          </button>
+        </form>
+        <div class="auth-links">
+          <button type="button" (click)="setMode('forgot')">Forgot password?</button>
+          <span>New here? <button type="button" (click)="setMode('register')">Create account</button></span>
         </div>
       }
 
-      <div class="field">
-        <label for="username">Username</label>
-        <div class="input-wrap">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12c2.8 0 5-2.2 5-5s-2.2-5-5-5-5 2.2-5 5 2.2 5 5 5Zm0-8c1.7 0 3 1.3 3 3s-1.3 3-3 3-3-1.3-3-3 1.3-3 3-3Zm0 10c-4.4 0-8 2.2-8 5v3h16v-3c0-2.8-3.6-5-8-5Zm-6 5c.5-1.2 3.1-3 6-3s5.5 1.8 6 3H6Z"/></svg>
-          <input id="username" type="text" formControlName="username" autocomplete="username" placeholder="Enter your username" />
+      @case ('register') {
+        <div class="login-heading">
+          <p class="eyebrow">CREATE ACCOUNT</p>
+          <h1 id="auth-title">Register</h1>
+          <p>Create your IConnect account.</p>
         </div>
-        @if (loginForm.controls.username.touched && loginForm.controls.username.hasError('required')) {
-          <p class="field-error">Username is required.</p>
-        }
-      </div>
-
-      <div class="field">
-        <label for="password">Password</label>
-        <div class="input-wrap">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8h-1V6c0-2.8-2.2-5-5-5S7 3.2 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2ZM9 6c0-1.7 1.3-3 3-3s3 1.3 3 3v2H9V6Zm9 14H6V10h12v10Zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2Z"/></svg>
-          <input id="password" [type]="showPassword() ? 'text' : 'password'" formControlName="password" autocomplete="current-password" placeholder="Enter your password" />
-          <button class="password-toggle" type="button" (click)="togglePassword()" [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'">
-            @if (showPassword()) {
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 4.3 3.3 3 21 20.7 19.7 22l-2.2-2.2A12 12 0 0 1 12 21C6.5 21 3 16.5 2 12c.4-1.7 1.2-3.2 2.2-4.5L2 4.3Zm4.6 4.6A9.9 9.9 0 0 0 4 12c.8 3.2 3.6 7 8 7 1.4 0 2.7-.4 3.8-1l-2.1-2.1A4 4 0 0 1 9 11.3L6.6 8.9Zm10.9-2.4A11 11 0 0 1 22 12c-.8 3.6-4.4 8.5-10 9l-1.8-1.8A10 10 0 0 0 12 19c4.4 0 7.2-3.8 8-7a9.7 9.7 0 0 0-2.6-3.6l1.1-1.1ZM12 7c.7 0 1.3.1 1.9.3l-1.6-1.6A4.2 4.2 0 0 1 16 9.7l-1.9-1.9A3 3 0 0 0 12 7Z"/></svg>
-            } @else {
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4C6.5 4 3 8.5 2 12c1 3.5 4.5 8 10 8s9-4.5 10-8c-1-3.5-4.5-8-10-8Zm0 14c-4.4 0-7.2-3.8-8-6 .8-2.2 3.6-6 8-6s7.2 3.8 8 6c-.8 2.2-3.6 6-8 6Zm0-10a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0 6a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z"/></svg>
+        <form [formGroup]="registerForm" (ngSubmit)="submitRegister()" novalidate>
+          <div class="field">
+            <label for="register-email">Email</label>
+            <div class="input-wrap">
+              <input id="register-email" type="email" formControlName="email" autocomplete="email" placeholder="Enter your email" />
+            </div>
+            @if (registerForm.controls.email.touched && registerForm.controls.email.hasError('required')) {
+              <p class="field-error">Email is required.</p>
+            } @else if (registerForm.controls.email.touched && registerForm.controls.email.hasError('email')) {
+              <p class="field-error">Enter a valid email address.</p>
             }
+          </div>
+
+          <div class="field">
+            <label for="register-password">Password</label>
+            <div class="input-wrap">
+              <input id="register-password" [type]="showPassword() ? 'text' : 'password'" formControlName="password" autocomplete="new-password" placeholder="Minimum 8 characters" />
+              <button class="password-toggle" type="button" (click)="togglePassword()"
+                [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+                [attr.title]="showPassword() ? 'Hide password' : 'Show password'">
+                @if (showPassword()) {
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.27-.36 1.83l2.43 2.43c1.5-1.19 2.7-2.71 3.43-4.26C20.84 8.36 16.66 5 12 5c-1.04 0-2.05.17-3 .48l1.56 1.56C10.98 7.02 11.48 7 12 7ZM2.27 1.72 1 3l2.72 2.72A13.4 13.4 0 0 0 2 12c1.66 3.64 5.84 7 10.5 7 1.25 0 2.45-.24 3.56-.68L18.62 21l1.27-1.27L2.27 1.72ZM12 17c-3.31 0-6.31-2.11-8-5 .64-1.1 1.48-2.09 2.45-2.91l1.7 1.7A5 5 0 0 0 12 16.5c.56 0 1.1-.09 1.6-.26l1.61 1.61c-.99.36-2.08.55-3.21.55Z"/></svg>
+                } @else {
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5C7.34 5 3.16 8.36 1.5 12 3.16 15.64 7.34 19 12 19s8.84-3.36 10.5-7C20.84 8.36 16.66 5 12 5Zm0 11.5A4.5 4.5 0 1 1 12 7.5a4.5 4.5 0 0 1 0 9Zm0-7.5a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/></svg>
+                }
+              </button>
+            </div>
+            @if (registerForm.controls.password.touched && registerForm.controls.password.hasError('required')) {
+              <p class="field-error">Password is required.</p>
+            } @else if (registerForm.controls.password.touched && registerForm.controls.password.hasError('minlength')) {
+              <p class="field-error">Password must be at least 8 characters.</p>
+            }
+          </div>
+
+          <div class="field">
+            <label for="confirm-password">Confirm password</label>
+            <div class="input-wrap">
+              <input id="confirm-password" [type]="showConfirmPassword() ? 'text' : 'password'" formControlName="confirmPassword" autocomplete="new-password" placeholder="Repeat your password" />
+              <button class="password-toggle" type="button" (click)="toggleConfirmPassword()"
+                [attr.aria-label]="showConfirmPassword() ? 'Hide password' : 'Show password'"
+                [attr.title]="showConfirmPassword() ? 'Hide password' : 'Show password'">
+                @if (showConfirmPassword()) {
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.27-.36 1.83l2.43 2.43c1.5-1.19 2.7-2.71 3.43-4.26C20.84 8.36 16.66 5 12 5c-1.04 0-2.05.17-3 .48l1.56 1.56C10.98 7.02 11.48 7 12 7ZM2.27 1.72 1 3l2.72 2.72A13.4 13.4 0 0 0 2 12c1.66 3.64 5.84 7 10.5 7 1.25 0 2.45-.24 3.56-.68L18.62 21l1.27-1.27L2.27 1.72ZM12 17c-3.31 0-6.31-2.11-8-5 .64-1.1 1.48-2.09 2.45-2.91l1.7 1.7A5 5 0 0 0 12 16.5c.56 0 1.1-.09 1.6-.26l1.61 1.61c-.99.36-2.08.55-3.21.55Z"/></svg>
+                } @else {
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5C7.34 5 3.16 8.36 1.5 12 3.16 15.64 7.34 19 12 19s8.84-3.36 10.5-7C20.84 8.36 16.66 5 12 5Zm0 11.5A4.5 4.5 0 1 1 12 7.5a4.5 4.5 0 0 1 0 9Zm0-7.5a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/></svg>
+                }
+              </button>
+            </div>
+            @if (registerForm.controls.confirmPassword.touched && registerForm.controls.confirmPassword.hasError('required')) {
+              <p class="field-error">Confirm your password.</p>
+            } @else if (registerForm.touched && registerForm.hasError('passwordMismatch')) {
+              <p class="field-error">Passwords do not match.</p>
+            }
+          </div>
+
+          <button class="submit-button" type="submit" [disabled]="isSubmitting()">
+            {{ isSubmitting() ? 'Creating account...' : 'Create account' }}
           </button>
+        </form>
+        <div class="auth-links">
+          <span>Already have an account? <button type="button" (click)="setMode('login')">Sign in</button></span>
         </div>
-        @if (loginForm.controls.password.touched && loginForm.controls.password.hasError('required')) {
-          <p class="field-error">Password is required.</p>
-        } @else if (loginForm.controls.password.touched && loginForm.controls.password.hasError('minlength')) {
-          <p class="field-error">Password must be at least 6 characters.</p>
-        }
-      </div>
+      }
 
-      <button class="submit-button" type="submit">Sign in <span aria-hidden="true">→</span></button>
-    </form>
+      @case ('forgot') {
+        <div class="login-heading">
+          <p class="eyebrow">ACCOUNT RECOVERY</p>
+          <h1 id="auth-title">Forgot password</h1>
+          <p>Enter your email to receive a reset link.</p>
+        </div>
+        <form [formGroup]="forgotForm" (ngSubmit)="submitForgotPassword()" novalidate>
+          <div class="field">
+            <label for="forgot-email">Email</label>
+            <div class="input-wrap">
+              <input id="forgot-email" type="email" formControlName="email" autocomplete="email" placeholder="Enter your account email" />
+            </div>
+            @if (forgotForm.controls.email.touched && forgotForm.controls.email.hasError('required')) {
+              <p class="field-error">Email is required.</p>
+            } @else if (forgotForm.controls.email.touched && forgotForm.controls.email.hasError('email')) {
+              <p class="field-error">Enter a valid email address.</p>
+            }
+          </div>
 
-    <div class="demo-credentials">
-      <p>Demo account</p>
-      <code>admin1234 / a134sg51</code>
-      <span>|</span>
-      <code>jdoe / welcome123</code>
-      <span>|</span>
-      <code>mgarcia / iconnect2026</code>
-      <span>|</span>
-      <code>lcruz / subscriber123</code>
-    </div>
+          <button class="submit-button" type="submit" [disabled]="isSubmitting()">
+            {{ isSubmitting() ? 'Sending...' : 'Send reset link' }}
+          </button>
+        </form>
+        <div class="auth-links">
+          <button type="button" (click)="setMode('login')">Back to sign in</button>
+        </div>
+      }
+
+      @case ('reset') {
+        <div class="login-heading">
+          <p class="eyebrow">ACCOUNT RECOVERY</p>
+          <h1 id="auth-title">Set a new password</h1>
+          <p>Choose a new password for your account.</p>
+        </div>
+        <form [formGroup]="resetForm" (ngSubmit)="submitResetPassword()" novalidate>
+          <input type="hidden" formControlName="email">
+          <input type="hidden" formControlName="token">
+          <div class="field">
+            <label for="reset-password">New password</label>
+            <div class="input-wrap">
+              <input id="reset-password" type="password" formControlName="newPassword" autocomplete="new-password" placeholder="Minimum 8 characters">
+            </div>
+            @if (resetForm.controls.newPassword.touched && resetForm.controls.newPassword.hasError('required')) {
+              <p class="field-error">Password is required.</p>
+            } @else if (resetForm.controls.newPassword.touched && resetForm.controls.newPassword.hasError('minlength')) {
+              <p class="field-error">Password must be at least 8 characters.</p>
+            }
+          </div>
+          <div class="field">
+            <label for="reset-confirm-password">Confirm new password</label>
+            <div class="input-wrap">
+              <input id="reset-confirm-password" type="password" formControlName="confirmPassword" autocomplete="new-password" placeholder="Repeat your password">
+            </div>
+            @if (resetForm.controls.confirmPassword.touched && resetForm.controls.confirmPassword.hasError('required')) {
+              <p class="field-error">Confirm your password.</p>
+            } @else if (resetForm.controls.confirmPassword.touched && resetForm.hasError('passwordMismatch')) {
+              <p class="field-error">Passwords do not match.</p>
+            }
+          </div>
+          <button class="submit-button" type="submit" [disabled]="isSubmitting()">
+            {{ isSubmitting() ? 'Updating...' : 'Reset password' }}
+          </button>
+        </form>
+        <div class="auth-links">
+          <button type="button" (click)="setMode('login')">Back to sign in</button>
+        </div>
+      }
+    }
   </section>
 </main>
