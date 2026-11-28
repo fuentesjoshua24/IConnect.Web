@@ -1,3 +1,3 @@
 export const environment = {
-  apiUrl: 'https://iconnect-api.runasp.net',
+  apiUrl: 'http://iconnect-api.runasp.net',
 };
