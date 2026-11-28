@@ -46,7 +46,7 @@ export class Dashboard {
     }).format(new Date(createdAt));
   });
 
-  readonly profileError = signal('');
+  readonly logoutError = signal('');
   readonly passwordError = signal('');
   readonly passwordSuccess = signal('');
   readonly isChangingPassword = signal(false);
@@ -61,10 +61,6 @@ export class Dashboard {
       : { passwordMismatch: true },
   });
 
-  constructor() {
-    void this.loadCurrentUser();
-  }
-
   async updatePassword(): Promise<void> {
     this.passwordError.set('');
     this.passwordSuccess.set('');
@@ -78,27 +74,15 @@ export class Dashboard {
       const { currentPassword, newPassword } = this.changePasswordForm.getRawValue();
       await firstValueFrom(this.auth.changePassword(currentPassword, newPassword));
       this.changePasswordForm.reset();
-      this.passwordSuccess.set('Your password has been updated.');
+      this.auth.clearSession();
+      await this.router.navigate(['/login'], {
+        replaceUrl: true,
+        queryParams: { passwordChanged: 'true' },
+      });
     } catch (error: unknown) {
       this.passwordError.set(this.passwordErrorMessage(error));
     } finally {
       this.isChangingPassword.set(false);
-    }
-  }
-
-  private async loadCurrentUser(): Promise<void> {
-    try {
-      const currentUser = await firstValueFrom(this.auth.getCurrentUser());
-      this.auth.setCurrentUser(currentUser);
-      this.profileError.set('');
-    } catch (error: unknown) {
-      if (error instanceof HttpErrorResponse && error.status === 401) {
-        this.auth.logout();
-        await this.router.navigate(['/login'], { replaceUrl: true });
-        return;
-      }
-
-      this.profileError.set('Unable to refresh your account details from the API.');
     }
   }
 
@@ -119,8 +103,14 @@ export class Dashboard {
     return 'Unable to update your password. Please try again.';
   }
 
-  logout(): void {
-    this.auth.logout();
-    void this.router.navigate(['/login'], { replaceUrl: true });
+  async logout(): Promise<void> {
+    this.logoutError.set('');
+    try {
+      await firstValueFrom(this.auth.logout());
+      this.auth.clearSession();
+      await this.router.navigate(['/login'], { replaceUrl: true });
+    } catch {
+      this.logoutError.set('Unable to sign out. Please check your connection and try again.');
+    }
   }
 }

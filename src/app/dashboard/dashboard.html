@@ -14,6 +14,9 @@
       }
     </nav>
 
+    @if (logoutError()) {
+      <p class="form-message error" role="alert">{{ logoutError() }}</p>
+    }
     <button class="logout" type="button" (click)="logout()"><svg viewBox="0 0 24 24"><path d="M10 17v-3H3v-4h7V7l5 5-5 5Zm10-14H12v2h8v14h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2Z"/></svg><span>Logout</span></button>
   </aside>
 
@@ -36,13 +39,6 @@
           <article class="panel profile-panel"><div class="panel-header"><div><h2>Account Details</h2><p>Authenticated API account</p></div></div><div class="profile-details"><div class="large-avatar">{{ currentUser.email.charAt(0).toUpperCase() }}</div><h3>{{ currentUser.email }}</h3><p>User ID: {{ currentUser.id }}</p><dl><div><dt>Email</dt><dd>{{ currentUser.email }}</dd></div><div><dt>Role</dt><dd>{{ currentUser.roles.join(', ') }}</dd></div><div><dt>Status</dt><dd>{{ currentUser.isActive ? 'Active' : 'Inactive' }}</dd></div><div><dt>Created</dt><dd>{{ createdAtLabel() }}</dd></div></dl></div></article>
         }
       </div>
-
-      @if (profileError()) {
-        <div class="connection-banner disconnected" role="status">
-          <span class="connection-dot"></span>
-          <div><strong>Profile refresh failed</strong><p>{{ profileError() }}</p></div>
-        </div>
-      }
 
       @if (isAdministrator()) {
         <article class="panel management-panel" id="users">

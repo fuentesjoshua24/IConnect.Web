@@ -1,5 +1,6 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export interface ApiUser {
@@ -11,7 +12,6 @@ export interface ApiUser {
 }
 
 export interface AuthResponse {
-  token: string;
   expiresAt: string;
   user: ApiUser;
 }
@@ -52,8 +52,15 @@ export class AuthService {
   private readonly tokenKey = 'iconnect_access_token';
   private readonly userKey = 'iconnect_current_user';
 
-  readonly token = signal<string | null>(localStorage.getItem(this.tokenKey));
-  readonly currentUser = signal<ApiUser | null>(this.restoreUser());
+  readonly currentUser = signal<ApiUser | null>(null);
+  readonly sessionError = signal('');
+  private sessionInitialized = false;
+  private sessionCheck: Promise<ApiUser | null> | null = null;
+
+  constructor() {
+    localStorage.removeItem(this.tokenKey);
+    localStorage.removeItem(this.userKey);
+  }
 
   login(email: string, password: string) {
     const request: LoginRequest = { email: email.trim(), password };
@@ -89,60 +96,56 @@ export class AuthService {
     return this.http.get<ApiUser>(`${this.baseUrl}/api/users/me`);
   }
 
+  async ensureSession(): Promise<ApiUser | null> {
+    if (this.sessionInitialized) {
+      return this.currentUser();
+    }
+
+    if (!this.sessionCheck) {
+      this.sessionCheck = firstValueFrom(this.getCurrentUser())
+        .then((user) => {
+          this.setCurrentUser(user);
+          this.sessionError.set('');
+          return user;
+        })
+        .catch((error: unknown) => {
+          if (error instanceof HttpErrorResponse && error.status === 401) {
+            this.currentUser.set(null);
+            this.sessionInitialized = true;
+            this.sessionError.set('');
+            return null;
+          }
+
+          this.sessionError.set('Cannot reach the API. Check the server and network connection.');
+          throw error;
+        })
+        .finally(() => {
+          this.sessionCheck = null;
+        });
+    }
+
+    return this.sessionCheck;
+  }
+
   setCurrentUser(user: ApiUser): void {
     const normalizedUser = this.normalizeUser(user);
-    localStorage.setItem(this.userKey, JSON.stringify(normalizedUser));
     this.currentUser.set(normalizedUser);
+    this.sessionInitialized = true;
   }
 
-  setAuthenticatedSession(response: AuthResponse): void {
-    const user = this.normalizeUser(response.user);
-    localStorage.setItem(this.tokenKey, response.token);
-    localStorage.setItem(this.userKey, JSON.stringify(user));
-    this.token.set(response.token);
-    this.currentUser.set(user);
+  setAuthenticatedSession(user: ApiUser): void {
+    this.sessionError.set('');
+    this.setCurrentUser(user);
   }
 
-  isAuthenticated(): boolean {
-    const token = this.token();
-    if (!token) {
-      return false;
-    }
-
-    try {
-      const payloadPart = token.split('.')[1];
-      if (!payloadPart) {
-        return false;
-      }
-
-      const normalized = payloadPart.replace(/-/g, '+').replace(/_/g, '/');
-      const padded = normalized.padEnd(normalized.length + ((4 - normalized.length % 4) % 4), '=');
-      const payload = JSON.parse(atob(padded)) as { exp?: number };
-      return typeof payload.exp === 'number' && payload.exp * 1000 > Date.now();
-    } catch {
-      return false;
-    }
+  logout() {
+    return this.http.post<void>(`${this.baseUrl}/api/auth/logout`, {});
   }
 
-  logout(): void {
-    localStorage.removeItem(this.tokenKey);
-    localStorage.removeItem(this.userKey);
-    this.token.set(null);
+  clearSession(): void {
     this.currentUser.set(null);
-  }
-
-  private restoreUser(): ApiUser | null {
-    const user = localStorage.getItem(this.userKey);
-    if (!user) {
-      return null;
-    }
-
-    try {
-      return this.normalizeUser(JSON.parse(user) as ApiUser & { role?: string });
-    } catch {
-      localStorage.removeItem(this.userKey);
-      return null;
-    }
+    this.sessionError.set('');
+    this.sessionInitialized = true;
   }
 
   private normalizeUser(user: ApiUser & { role?: string }): ApiUser {

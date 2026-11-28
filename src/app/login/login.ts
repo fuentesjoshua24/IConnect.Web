@@ -7,6 +7,14 @@ import { AuthService } from '../services/auth.service';
 
 type AuthMode = 'login' | 'register' | 'forgot' | 'reset';
 
+export function parseResetPasswordFragment(fragment: string): { email: string; token: string } | null {
+  const parameters = new URLSearchParams(fragment.replace(/^#/, ''));
+  const email = parameters.get('email');
+  const token = parameters.get('token');
+
+  return email && token ? { email, token } : null;
+}
+
 @Component({
   selector: 'app-login',
   imports: [ReactiveFormsModule],
@@ -55,10 +63,18 @@ export class Login {
   );
 
   constructor() {
-    const email = this.route.snapshot.queryParamMap.get('email');
-    const token = this.route.snapshot.queryParamMap.get('token');
-    if (email && token) {
-      this.resetForm.patchValue({ email, token });
+    if (this.route.snapshot.queryParamMap.get('apiUnavailable') === 'true') {
+      this.errorMessage.set('Cannot reach the API. Check the server and network connection.');
+    } else if (this.auth.sessionError()) {
+      this.errorMessage.set(this.auth.sessionError());
+    }
+    if (this.route.snapshot.queryParamMap.get('passwordChanged') === 'true') {
+      this.successMessage.set('Your password has been updated. Sign in with your new password.');
+    }
+
+    const resetDetails = parseResetPasswordFragment(globalThis.location.hash);
+    if (resetDetails) {
+      this.resetForm.patchValue(resetDetails);
       this.mode.set('reset');
     }
   }
@@ -75,7 +91,7 @@ export class Login {
       async () => {
         const { email, password } = this.loginForm.getRawValue();
         const response = await firstValueFrom(this.auth.login(email, password));
-        this.auth.setAuthenticatedSession(response);
+        this.auth.setAuthenticatedSession(response.user);
 
         const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/dashboard';
         await this.router.navigateByUrl(returnUrl, { replaceUrl: true });
@@ -90,7 +106,7 @@ export class Login {
       async () => {
         const { email, password } = this.registerForm.getRawValue();
         const response = await firstValueFrom(this.auth.register(email, password));
-        this.auth.setAuthenticatedSession(response);
+        this.auth.setAuthenticatedSession(response.user);
         await this.router.navigateByUrl('/dashboard', { replaceUrl: true });
       },
       'Registration failed. Please check your details and try again.',
